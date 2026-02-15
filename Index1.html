@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code Based Smart Attendance Management System | PBL 2026</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #020617;
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #60a5fa, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #timerContainer {
+            background: #ffffff;
+            color: #020617;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            border: 3px solid #3b82f6;
+        }
+    </style>
+</head>
+
+<body onload="startTimer()">
+
+<!-- TIMER -->
+<div id="timerContainer" class="fixed bottom-10 right-10 px-8 py-4 rounded-3xl flex items-center gap-4">
+    <i class="fas fa-hourglass-start text-blue-600 text-2xl"></i>
+    <span id="displayTime" class="text-4xl font-black font-mono">00:00</span>
+</div>
+
+<main class="max-w-6xl mx-auto px-6 pt-24 pb-32 space-y-32">
+
+<!-- HEADER -->
+<section class="text-center">
+    <div class="inline-block px-4 py-1 border border-slate-800 rounded-full text-slate-500 text-[10px] font-mono mb-6 uppercase">
+        ID: 2427030801
+    </div>
+
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-8 uppercase leading-tight">
+        <span class="gradient-text">
+            QR Code Based Smart Attendance Management System
+        </span>
+    </h1>
+
+    <p class="text-slate-400 max-w-2xl mx-auto italic text-lg border-l-2 border-blue-500/30 pl-6 text-left">
+        Automating traditional attendance systems using secure, time-limited QR authentication integrated with structured database architecture.
+    </p>
+</section>
+
+<!-- PROBLEM & SOLUTION -->
+<section class="grid md:grid-cols-2 gap-12">
+    <div class="glass p-10 rounded-[2.5rem] border-l-4 border-blue-600">
+        <h2 class="text-3xl font-extrabold mb-6">Problem Statement</h2>
+        <p class="text-slate-400 text-justify">
+            Traditional attendance systems face operational and security challenges such as proxy attendance,
+            manual record keeping, and lack of real-time tracking in large classrooms.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+        <div class="glass p-7 rounded-3xl border-r-4 border-blue-500/50">
+            <h3 class="text-blue-400 font-bold text-xs uppercase tracking-widest mb-2">
+                Solution Approach
+            </h3>
+            <p class="text-sm text-slate-500 italic">
+                QR-based authentication with time-limited tokens validated against a database.
+            </p>
+        </div>
+
+        <div class="glass p-7 rounded-3xl border-r-4 border-purple-500/50">
+            <h3 class="text-purple-400 font-bold text-xs uppercase tracking-widest mb-2">
+                Innovation
+            </h3>
+            <p class="text-sm text-slate-500 italic">
+                Eliminates proxy attendance while enabling automated Excel export and analytics.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section>
+    <h2 class="text-4xl font-black text-center uppercase mb-12">
+        System <span class="text-blue-500">Architecture</span>
+    </h2>
+
+    <div class="grid md:grid-cols-4 gap-8">
+        <div class="glass p-8 rounded-3xl text-center">
+            <i class="fas fa-database text-blue-500 text-3xl mb-4"></i>
+            <h3 class="font-bold uppercase text-xs mb-2">Backend</h3>
+            <p class="text-sm text-slate-500">
+                Flask API with MySQL database.
+            </p>
+        </div>
+
+        <div class="glass p-8 rounded-3xl text-center">
+            <i class="fas fa-qrcode text-purple-500 text-3xl mb-4"></i>
+            <h3 class="font-bold uppercase text-xs mb-2">QR Validation</h3>
+            <p class="text-sm text-slate-500">
+                Time-limited dynamic QR codes.
+            </p>
+        </div>
+
+        <div class="glass p-8 rounded-3xl text-center">
+            <i class="fas fa-chart-bar text-green-500 text-3xl mb-4"></i>
+            <h3 class="font-bold uppercase text-xs mb-2">Analytics</h3>
+            <p class="text-sm text-slate-500">
+                Automated reports & dashboards.
+            </p>
+        </div>
+
+        <div class="glass p-8 rounded-3xl text-center border border-green-500/20 bg-green-500/5">
+            <i class="fab fa-python text-green-500 text-3xl mb-4"></i>
+            <h3 class="font-bold uppercase text-xs text-green-400 mb-4">
+                Live Execution
+            </h3>
+            <a href="https://presently.pythonanywhere.com" target="_blank"
+               class="px-6 py-2 bg-green-600 rounded-full text-[10px] font-black hover:bg-green-500 transition">
+                VIEW DEMO
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- RESULTS -->
+<section class="glass p-12 rounded-[3.5rem] border-t-4 border-blue-500">
+    <h2 class="text-3xl font-black text-center uppercase mb-12">
+        Results & <span class="text-blue-500">Impact</span>
+    </h2>
+
+    <div class="grid md:grid-cols-2 gap-16 items-center">
+        <div class="h-80">
+            <canvas id="resultsChart"></canvas>
+        </div>
+
+        <p class="text-slate-500 italic text-justify">
+            Attendance marking reduced from over 5 minutes to under 30 seconds,
+            ensuring accuracy and eliminating proxy attendance.
+        </p>
+    </div>
+</section>
+
+<!-- CREDITS -->
+<section class="text-center pt-10 border-t border-slate-900">
+    <h2 class="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] mb-12">
+        Academic Credits
+    </h2>
+
+    <div class="flex flex-wrap justify-center gap-10">
+        <div class="glass px-12 py-8 rounded-[2rem] border-b-4 border-blue-600">
+            <p class="text-[9px] font-bold text-blue-500 uppercase mb-2">Project Guide</p>
+            <p class="font-black text-xl">Dr. Dibakar Sinha</p>
+        </div>
+
+        <div class="glass px-12 py-8 rounded-[2rem] border-b-4 border-slate-700">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Student</p>
+            <p class="font-black text-xl">Sakshat Jain</p>
+            <p class="text-[10px] text-slate-500 mt-1">2427030801</p>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<script>
+let sec = 0;
+function startTimer() {
+    setInterval(() => {
+        sec++;
+        let m = Math.floor(sec / 60);
+        let s = sec % 60;
+        document.getElementById("displayTime").innerText =
+            `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+}
+
+const ctx = document.getElementById("resultsChart");
+new Chart(ctx, {
+    type: "bar",
+    data: {
+        labels: ["Manual System", "QR System"],
+        datasets: [{
+            data: [60, 92],
+            backgroundColor: ["#1e293b", "#3b82f6"],
+            borderRadius: 12
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
+
+</body>
+</html>
