@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendX — Smart Attendance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050810;--sur:#0d1221;--sur2:#131929;--sur3:#1a2236;--bor:rgba(99,160,255,.12);--bor2:rgba(99,160,255,.22);--acc:#3d8bff;--acc2:#7c4dff;--acc3:#00e5ff;--ok:#00e676;--warn:#ffd740;--err:#ff5252;--tx:#e8eeff;--tx2:#8899bb;--tx3:#4a5a7a}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(61,139,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(61,139,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+#auth{display:flex;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:2rem;position:relative;z-index:1}
+.orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none}
+.orb1{width:500px;height:500px;background:rgba(61,139,255,.08);top:-100px;right:-100px}
+.orb2{width:400px;height:400px;background:rgba(124,77,255,.07);bottom:-100px;left:-100px}
+.a-logo{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:2rem;display:flex;align-items:center;gap:.6rem}
+.a-logo .d{color:var(--acc)}
+.vbadge{font-size:.55rem;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;padding:3px 8px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.1em;align-self:flex-start;margin-top:6px}
+.acard{background:var(--sur);border:1px solid var(--bor2);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 0 40px rgba(61,139,255,.15),0 40px 80px rgba(0,0,0,.4);position:relative;overflow:hidden}
+.acard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2),var(--acc3))}
+.atabs{display:flex;background:var(--sur2);border-radius:10px;padding:4px;margin-bottom:1.5rem}
+.atab{flex:1;padding:.6rem;border:none;background:transparent;color:var(--tx2);font-family:'Outfit',sans-serif;font-size:.875rem;font-weight:500;cursor:pointer;border-radius:7px;transition:all .2s}
+.atab.on{background:var(--sur3);color:var(--tx);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.atitle{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:.3rem}
+.asub{color:var(--tx2);font-size:.875rem;margin-bottom:1.5rem}
+.fl{margin-bottom:1.1rem}
+.flabel{display:block;font-size:.78rem;color:var(--tx2);margin-bottom:.4rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.finput{width:100%;background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:.75rem 1rem;color:var(--tx);font-family:'Outfit',sans-serif;font-size:.9rem;outline:none;transition:all .2s}
+.finput:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(61,139,255,.1)}
+.finput::placeholder{color:var(--tx3)}
+select.finput option{background:var(--sur2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1.5rem;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s}
+.bp{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;width:100%;padding:.85rem;box-shadow:0 4px 20px rgba(61,139,255,.3)}
+.bp:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(61,139,255,.4)}
+.bs{background:var(--sur3);color:var(--tx);border:1px solid var(--bor)}
+.bs:hover{border-color:var(--bor2)}
+.bd{background:rgba(255,82,82,.15);color:var(--err);border:1px solid rgba(255,82,82,.25)}
+.bsuc{background:rgba(0,230,118,.15);color:var(--ok);border:1px solid rgba(0,230,118,.25)}
+.bsm{padding:.4rem .9rem;font-size:.8rem}
+.bxs{padding:.3rem .7rem;font-size:.75rem;border-radius:7px}
+#app{display:none;min-height:100vh;flex-direction:row;position:relative;z-index:1}
+.sidebar{width:240px;min-height:100vh;background:var(--sur);border-right:1px solid var(--bor);display:flex;flex-direction:column;padding:1.5rem 1rem;position:fixed;left:0;top:0;bottom:0;z-index:100;overflow-y:auto}
+.slogo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.03em;padding:.5rem .75rem 1.5rem;display:flex;align-items:center;gap:.5rem}
+.slogo .acc{color:var(--acc)}
+.slabel{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--tx3);padding:0 .75rem;margin:1rem 0 .4rem;font-weight:600}
+.nav{display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;border-radius:10px;color:var(--tx2);cursor:pointer;font-size:.875rem;font-weight:500;transition:all .15s;margin-bottom:2px;border:none;background:transparent;width:100%;text-align:left}
+.nav:hover{background:var(--sur2);color:var(--tx)}
+.nav.on{background:rgba(61,139,255,.12);color:var(--acc);border:1px solid rgba(61,139,255,.18)}
+.nav .ni{width:18px;text-align:center;font-size:1rem}
+.sbot{margin-top:auto;padding-top:1rem;border-top:1px solid var(--bor)}
+.uchip{display:flex;align-items:center;gap:.7rem;padding:.75rem;background:var(--sur2);border-radius:10px;margin-bottom:.5rem}
+.uav{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0}
+.uname{font-size:.8rem;font-weight:600}
+.urole{font-size:.7rem;color:var(--tx2)}
+.main{margin-left:240px;flex:1;min-height:100vh;padding:2rem}
+.view{display:none;animation:fi .3s ease}
+.view.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.phead{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+.ptitle{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700}
+.psub{color:var(--tx2);font-size:.875rem;margin-top:.2rem}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1rem;margin-bottom:2rem}
+.scard{background:var(--sur);border:1px solid var(--bor);border-radius:16px;padding:1.3rem;position:relative;overflow:hidden;transition:all .2s}
+.scard:hover{border-color:var(--bor2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);opacity:.5}
+.sicon{font-size:1.5rem;margin-bottom:.75rem}
+.sval{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;line-height:1;margin-bottom:.3rem}
+.slb{font-size:.78rem;color:var(--tx2);font-weight:500}
+.card{background:var(--sur);border:1px solid var(--bor);border-radius:16px;overflow:hidden}
+.ch{padding:1.2rem 1.5rem;border-bottom:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.ctitle{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+.cb{padding:1.5rem}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:900px){.g2{grid-template-columns:1fr}.main{margin-left:0}.sidebar{display:none}}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.875rem}
+th{text-align:left;padding:.75rem 1rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--tx3);font-weight:600;border-bottom:1px solid var(--bor);white-space:nowrap}
+td{padding:.85rem 1rem;border-bottom:1px solid var(--bor);color:var(--tx2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(99,160,255,.03)}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:20px;font-size:.72rem;font-weight:600;letter-spacing:.04em}
+.bok{background:rgba(0,230,118,.12);color:var(--ok);border:1px solid rgba(0,230,118,.2)}
+.berr{background:rgba(255,82,82,.12);color:var(--err);border:1px solid rgba(255,82,82,.2)}
+.bwarn{background:rgba(255,215,64,.12);color:var(--warn);border:1px solid rgba(255,215,64,.2)}
+.bacc{background:rgba(61,139,255,.12);color:var(--acc);border:1px solid rgba(61,139,255,.2)}
+.ov{display:none;position:fixed;inset:0;background:rgba(5,8,16,.85);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;padding:1rem}
+.ov.on{display:flex}
+.modal{background:var(--sur);border:1px solid var(--bor2);border-radius:20px;padding:2rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 40px rgba(61,139,255,.15);position:relative;animation:mi .25s ease}
+.modal.wide{max-width:720px}
+@keyframes mi{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.mclose{position:absolute;top:1.2rem;right:1.2rem;width:30px;height:30px;border-radius:50%;background:var(--sur3);border:none;color:var(--tx2);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mclose:hover{background:var(--err);color:#fff}
+.mtitle{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:.7rem}
+.qrbox{display:inline-block;background:#fff;padding:1.2rem;border-radius:16px;margin:1.5rem auto;box-shadow:0 0 60px rgba(61,139,255,.3)}
+.qtimer{font-family:'DM Mono',monospace;font-size:2.5rem;font-weight:500;color:var(--acc);letter-spacing:.05em}
+.qtimer.warn{color:var(--warn)}.qtimer.exp{color:var(--err)}
+.qinfo{display:flex;justify-content:center;gap:1rem;margin-top:1rem;flex-wrap:wrap}
+.qchip{background:var(--sur2);border:1px solid var(--bor);border-radius:8px;padding:.5rem 1rem;font-size:.8rem;color:var(--tx2)}
+.qchip span{color:var(--tx);font-weight:600}
+.secgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1rem}
+.seccard{background:var(--sur);border:1px solid var(--bor);border-radius:14px;padding:1.3rem;text-align:center;transition:all .2s;cursor:pointer}
+.seccard:hover{border-color:var(--acc);box-shadow:0 0 30px rgba(61,139,255,.1);transform:translateY(-2px)}
+.sescard{background:var(--sur);border:1px solid var(--bor);border-radius:14px;padding:1.2rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;transition:all .2s;flex-wrap:wrap}
+.sescard:hover{border-color:var(--bor2)}
+.pb{height:6px;background:var(--sur3);border-radius:20px;overflow:hidden;margin-top:.5rem}
+.pf{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .5s ease}
+.empty{text-align:center;padding:3rem;color:var(--tx3)}
+.empty .ei{font-size:3rem;margin-bottom:1rem;opacity:.4}
+.spinner{width:20px;height:20px;border:2px solid var(--bor);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast-box{position:fixed;top:1.5rem;right:1.5rem;z-index:9998;display:flex;flex-direction:column;gap:.5rem}
+.toast{background:var(--sur);border:1px solid var(--bor2);border-radius:12px;padding:.9rem 1.2rem;display:flex;align-items:center;gap:.75rem;font-size:.875rem;max-width:320px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:sli .3s ease}
+@keyframes sli{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.inforow{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--bor);font-size:.875rem}
+.inforow:last-child{border-bottom:none}
+.chart-wrap{position:relative;height:240px}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--sur)}
+::-webkit-scrollbar-thumb{background:var(--sur3);border-radius:3px}
+.gps-status-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .75rem;border-radius:20px;font-size:.75rem;font-weight:600}
+</style>
+</head>
+<body>
+<div class="toast-box" id="toasts"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="a-logo">Attend<span class="d">X</span><span class="vbadge">v2.0</span></div>
+  <div class="acard">
+    <div class="atabs">
+      <button class="atab on" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="atab" id="tab-reg" onclick="switchTab('reg')">Register</button>
+    </div>
+    <div id="pane-login">
+      <div class="atitle">Welcome back</div>
+      <div class="asub">Sign in to your professor account</div>
+      <div class="fl"><label class="flabel">Email</label><input class="finput" id="li-email" type="email" placeholder="professor@university.edu"></div>
+      <div class="fl"><label class="flabel">Password</label><input class="finput" id="li-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn bp" onclick="doLogin()">Sign In →</button>
+    </div>
+    <div id="pane-reg" style="display:none">
+      <div class="atitle">Create account</div>
+      <div class="asub">Register as a professor</div>
+      <div class="fl"><label class="flabel">Full Name</label><input class="finput" id="rg-name" placeholder="Dr. Jane Smith"></div>
+      <div class="fl"><label class="flabel">Email</label><input class="finput" id="rg-email" type="email" placeholder="professor@university.edu"></div>
+      <div class="fl"><label class="flabel">Department</label><input class="finput" id="rg-dept" placeholder="Computer Science"></div>
+      <div class="fl"><label class="flabel">Password</label><input class="finput" id="rg-pw" type="password" placeholder="Min 6 characters"></div>
+      <button class="btn bp" onclick="doRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="slogo">📡 Attend<span class="acc">X</span></div>
+    <div class="slabel">Main</div>
+    <button class="nav on" onclick="showView('dashboard',this)"><span class="ni">⊞</span> Dashboard</button>
+    <button class="nav" onclick="showView('sections',this)"><span class="ni">◫</span> Sections</button>
+    <button class="nav" onclick="showView('students',this)"><span class="ni">👥</span> Students</button>
+    <div class="slabel">Attendance</div>
+    <button class="nav" onclick="showView('qr',this)"><span class="ni">⬡</span> QR Sessions</button>
+    <button class="nav" onclick="showView('records',this)"><span class="ni">📋</span> Records</button>
+    <button class="nav" onclick="showView('analytics',this)"><span class="ni">📈</span> Analytics</button>
+    <div class="sbot">
+      <div class="uchip"><div class="uav" id="u-av">P</div><div><div class="uname" id="u-name">Professor</div><div class="urole" id="u-role">—</div></div></div>
+      <button class="nav" onclick="logout()" style="color:var(--err)"><span class="ni">⎋</span> Logout</button>
+    </div>
+  </aside>
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view on" id="v-dashboard">
+      <div class="phead">
+        <div><div class="ptitle">Dashboard</div><div class="psub" id="greet"></div></div>
+        <button class="btn bp bsm" onclick="openModal('m-newsession')">⊕ New QR Session</button>
+      </div>
+      <div class="sgrid" id="dash-stats"></div>
+      <div class="g2">
+        <div class="card"><div class="ch"><div class="ctitle">Recent Sessions</div><span class="badge bacc">Live</span></div><div id="dash-sessions"></div></div>
+        <div class="card"><div class="ch"><div class="ctitle">Attendance by Section</div></div><div class="cb" id="dash-sections"></div></div>
+      </div>
+      <div class="card"><div class="ch"><div class="ctitle">Attendance Trend</div><span style="font-size:.8rem;color:var(--tx2)">Last 10 sessions</span></div><div class="cb"><div class="chart-wrap"><canvas id="c-trend"></canvas></div></div></div>
+    </div>
+
+    <!-- SECTIONS -->
+    <div class="view" id="v-sections">
+      <div class="phead"><div><div class="ptitle">Sections</div></div><button class="btn bp bsm" onclick="openModal('m-newsec')">⊕ Add Section</button></div>
+      <div class="secgrid" id="sec-grid"></div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div class="view" id="v-students">
+      <div class="phead">
+        <div><div class="ptitle">Students</div></div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+          <input class="finput" id="stu-search" placeholder="🔍 Search..." oninput="loadStudents()" style="width:180px">
+          <select class="finput" id="stu-sec" onchange="loadStudents()" style="width:auto"><option value="">All Sections</option></select>
+          <button class="btn bs bsm" onclick="openModal('m-bulkupload')">📥 Upload Excel</button>
+          <button class="btn bp bsm" onclick="openModal('m-newstu')">⊕ Add Student</button>
+        </div>
+      </div>
+      <div class="card"><div class="twrap"><table>
+        <thead><tr><th>#</th><th>Name</th><th>Reg No.</th><th>Section</th><th>Attendance %</th><th>Standing</th><th>Action</th></tr></thead>
+        <tbody id="stu-table"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- QR SESSIONS -->
+    <div class="view" id="v-qr">
+      <div class="phead"><div><div class="ptitle">QR Sessions</div></div><button class="btn bp bsm" onclick="openModal('m-newsession')">⬡ Generate QR</button></div>
+      <div id="live-banner" style="display:none;margin-bottom:1.5rem"></div>
+      <div class="card">
+        <div class="ch"><div class="ctitle">All Sessions</div>
+          <select class="finput" id="ses-secf" onchange="loadSessions()" style="width:auto;font-size:.8rem;padding:.4rem .7rem"><option value="">All Sections</option></select>
+        </div>
+        <div id="ses-list" style="padding:1rem"></div>
+      </div>
+    </div>
+
+    <!-- RECORDS -->
+    <div class="view" id="v-records">
+      <div class="phead"><div><div class="ptitle">Attendance Records</div></div><button class="btn bs bsm" onclick="exportCSV()">⬇ Export CSV</button></div>
+      <div class="card" style="margin-bottom:1.5rem"><div class="cb" style="display:flex;gap:1rem;flex-wrap:wrap;padding:1rem 1.5rem">
+        <select class="finput" id="rec-sec" onchange="loadRecords()" style="width:auto"><option value="">All Sections</option></select>
+        <select class="finput" id="rec-ses" onchange="loadRecords()" style="width:auto"><option value="">All Sessions</option></select>
+      </div></div>
+      <div class="card"><div class="twrap"><table>
+        <thead><tr><th>Student</th><th>Reg No.</th><th>Section</th><th>Session</th><th>Timestamp</th><th>Layers</th><th>Status</th></tr></thead>
+        <tbody id="rec-table"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="view" id="v-analytics">
+      <div class="phead"><div><div class="ptitle">Analytics</div></div></div>
+      <div class="sgrid" id="an-stats"></div>
+      <div class="g2" style="margin-bottom:1.5rem">
+        <div class="card"><div class="ch"><div class="ctitle">By Section</div></div><div class="cb"><div class="chart-wrap"><canvas id="c-sec"></canvas></div></div></div>
+        <div class="card"><div class="ch"><div class="ctitle">Trend</div></div><div class="cb"><div class="chart-wrap"><canvas id="c-trend2"></canvas></div></div></div>
+      </div>
+      <div class="card"><div class="ch"><div class="ctitle">Student Performance</div></div>
+        <div class="twrap"><table>
+          <thead><tr><th>Student</th><th>Section</th><th>Present</th><th>Total</th><th>Attendance %</th><th>Standing</th></tr></thead>
+          <tbody id="an-table"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="ov" id="m-newsec"><div class="modal">
+  <button class="mclose" onclick="closeModal('m-newsec')">×</button>
+  <div class="mtitle">📚 New Section</div>
+  <div class="fl"><label class="flabel">Section Name</label><input class="finput" id="ns-name" placeholder="e.g. Section A"></div>
+  <div class="fl"><label class="flabel">Course Name</label><input class="finput" id="ns-course" placeholder="e.g. Data Structures"></div>
+  <div class="fl"><label class="flabel">Year / Semester</label><input class="finput" id="ns-year" placeholder="e.g. 3rd Year, Sem 6"></div>
+  <button class="btn bp" onclick="createSection()">Add Section</button>
+</div></div>
+
+<div class="ov" id="m-newstu"><div class="modal">
+  <button class="mclose" onclick="closeModal('m-newstu')">×</button>
+  <div class="mtitle">👤 Add Student</div>
+  <div class="fl"><label class="flabel">Full Name</label><input class="finput" id="nst-name" placeholder="Student full name"></div>
+  <div class="fl"><label class="flabel">Registration Number</label><input class="finput" id="nst-reg" placeholder="e.g. 2021CS001" style="font-family:'DM Mono',monospace"></div>
+  <div class="fl"><label class="flabel">Section</label><select class="finput" id="nst-sec"></select></div>
+  <button class="btn bp" onclick="createStudent()">Add Student</button>
+</div></div>
+
+<div class="ov" id="m-newsession"><div class="modal">
+  <button class="mclose" onclick="closeModal('m-newsession')">×</button>
+  <div class="mtitle">⬡ Generate QR Session</div>
+  <div class="fl"><label class="flabel">Session Name</label><input class="finput" id="nses-name" placeholder="e.g. Lecture 12 — Trees"></div>
+  <div class="fl"><label class="flabel">Section</label><select class="finput" id="nses-sec"></select></div>
+  <div class="fl"><label class="flabel">Expiry Duration</label>
+    <select class="finput" id="nses-ttl">
+      <option value="5">5 minutes</option><option value="10" selected>10 minutes</option>
+      <option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option>
+    </select>
+  </div>
+  <div class="fl"><label class="flabel">GPS Radius (metres)</label>
+    <select class="finput" id="nses-radius">
+      <option value="50">50 metres (strict)</option><option value="100" selected>100 metres</option>
+      <option value="200">200 metres</option><option value="0">Disabled (no GPS check)</option>
+    </select>
+  </div>
+  <div id="gps-capture-status" style="margin-bottom:1rem;padding:.75rem;background:var(--sur2);border-radius:10px;border:1px solid var(--bor);font-size:.82rem;color:var(--tx2)">
+    📍 GPS location will be captured when you click Generate
+  </div>
+  <button class="btn bp" onclick="createSession()">⬡ Generate QR Code</button>
+</div></div>
+
+<div class="ov" id="m-qr"><div class="modal wide">
+  <button class="mclose" onclick="closeModal('m-qr')">×</button>
+  <div class="mtitle">⬡ Active QR Session</div>
+  <div style="text-align:center;padding:1rem">
+    <div style="font-size:.8rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">SCAN TO MARK ATTENDANCE</div>
+    <div class="qrbox" id="qr-img"></div>
+    <div style="font-size:.8rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem">TIME REMAINING</div>
+    <div class="qtimer" id="qr-timer">10:00</div>
+    <div class="qinfo" id="qr-info"></div>
+    <div id="gps-badge" style="margin-top:.75rem"></div>
+    <div style="margin-top:.75rem;font-size:.72rem;color:var(--tx3);background:var(--sur2);border-radius:8px;padding:.6rem 1rem;word-break:break-all;cursor:pointer" id="qr-url-display" onclick="copyUrl()">—</div>
+  </div>
+  <div style="text-align:center;margin-top:.5rem"><button class="btn bd bsm" onclick="expireCurrentSession()">Expire Session Now</button></div>
+</div></div>
+
+<script>
+const API='';
+let TOKEN='',PROF=null,sections=[],activeSes=null,timerIv=null,charts={};
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(method,path,body=null){
+  const opts={method,headers:{'Content-Type':'application/json',...(TOKEN?{Authorization:`Bearer ${TOKEN}`}:{})}};
+  if(body) opts.body=JSON.stringify(body);
+  const res=await fetch(API+path,opts);
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.detail||`HTTP ${res.status}`);
+  return data;
+}
+
+function toast(msg,type='info'){
+  const c={success:'var(--ok)',error:'var(--err)',info:'var(--acc)'};
+  const i={success:'✓',error:'✗',info:'ℹ'};
+  const el=document.createElement('div');
+  el.className='toast';
+  el.innerHTML=`<span style="color:${c[type]}">${i[type]}</span>${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+
+function fmt(iso){
+  if(!iso)return'—';
+  try{
+    const s=iso.endsWith('Z')?iso:iso+'Z';
+    return new Date(s).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  }catch{return iso;}
+}
+
+function secToMMSS(s){return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function switchTab(t){
+  ['login','reg'].forEach(x=>{
+    document.getElementById(`tab-${x}`).classList.toggle('on',x===t);
+    document.getElementById(`pane-${x}`).style.display=x===t?'block':'none';
+  });
+}
+
+async function doLogin(){
+  try{
+    const d=await api('POST','/api/auth/login',{email:document.getElementById('li-email').value.trim(),password:document.getElementById('li-pw').value});
+    setSession(d);
+  }catch(e){toast(e.message,'error');}
+}
+
+async function doRegister(){
+  try{
+    const d=await api('POST','/api/auth/register',{name:document.getElementById('rg-name').value.trim(),email:document.getElementById('rg-email').value.trim(),password:document.getElementById('rg-pw').value,department:document.getElementById('rg-dept').value.trim()});
+    setSession(d);
+  }catch(e){toast(e.message,'error');}
+}
+
+function setSession(d){
+  TOKEN=d.access_token;PROF=d.professor;
+  localStorage.setItem('ax_token',TOKEN);
+  localStorage.setItem('ax_prof',JSON.stringify(PROF));
+  enterApp();
+}
+
+function logout(){
+  TOKEN='';PROF=null;activeSes=null;
+  localStorage.removeItem('ax_token');localStorage.removeItem('ax_prof');
+  document.getElementById('auth').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+function enterApp(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('u-name').textContent=PROF.name;
+  document.getElementById('u-role').textContent=PROF.department||'Professor';
+  document.getElementById('u-av').textContent=PROF.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+  const h=new Date().getHours();
+  document.getElementById('greet').textContent=`${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${PROF.name.split(' ')[0]}!`;
+  loadAll();
+}
+
+// Auto-login check
+TOKEN=localStorage.getItem('ax_token')||'';
+PROF=JSON.parse(localStorage.getItem('ax_prof')||'null');
+if(TOKEN&&PROF) enterApp();
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function showView(id,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById('v-'+id).classList.add('on');
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
+  if(el)el.classList.add('on');
+  const loaders={dashboard:loadDashboard,sections:loadSections,students:loadStudents,qr:loadSessions,records:loadRecords,analytics:loadAnalytics};
+  if(loaders[id])loaders[id]();
+}
+
+function openModal(id){
+  if(id==='m-newstu')fillSelect('nst-sec');
+  if(id==='m-newsession')fillSelect('nses-sec');
+  document.getElementById(id).classList.add('on');
+}
+function closeModal(id){document.getElementById(id).classList.remove('on');}
+
+async function loadAll(){await loadSections();loadDashboard();}
+
+// ── SECTIONS ──────────────────────────────────────────────────────────────────
+async function loadSections(){
+  try{
+    sections=await api('GET','/api/sections/');
+    renderSections();fillAllSelects();
+  }catch(e){toast(e.message,'error');}
+}
+
+function renderSections(){
+  const g=document.getElementById('sec-grid');
+  if(!sections.length){g.innerHTML='<div class="empty"><div class="ei">◫</div><p>No sections yet</p></div>';return;}
+  g.innerHTML=sections.map(s=>{
+    const l=(s.name.replace(/section\s*/i,'')||'?')[0].toUpperCase();
+    return`<div class="seccard">
+      <div onclick="filterStudents(${s.id})" style="cursor:pointer">
+        <div style="font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1">${l}</div>
+        <div style="font-weight:600">${s.name}</div>
+        <div style="font-size:.82rem;color:var(--tx2)">${s.course}</div>
+        <div style="font-size:.75rem;color:var(--tx3)">${s.student_count||0} students</div>
+      </div>
+      <button onclick="deleteSection(${s.id},'${s.name.replace(/'/g,'')}')" class="btn bd bxs" style="margin-top:.75rem;width:100%;font-size:.72rem">🗑 Remove Section</button>
+    </div>`;
+  }).join('');
+}
+
+async function createSection(){
+  try{
+    await api('POST','/api/sections/',{name:document.getElementById('ns-name').value.trim(),course:document.getElementById('ns-course').value.trim(),year_sem:document.getElementById('ns-year').value.trim()});
+    toast('Section created!','success');closeModal('m-newsec');
+    document.getElementById('ns-name').value='';document.getElementById('ns-course').value='';document.getElementById('ns-year').value='';
+    await loadSections();
+  }catch(e){toast(e.message,'error');}
+}
+
+function fillAllSelects(){
+  ['stu-sec','ses-secf','rec-sec'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const v=el.value;
+    el.innerHTML='<option value="">All Sections</option>'+sections.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    el.value=v;
+  });
+}
+
+function fillSelect(elId){
+  const el=document.getElementById(elId);if(!el)return;
+  el.innerHTML=sections.map(s=>`<option value="${s.id}">${s.name} — ${s.course}</option>`).join('');
+}
+
+// ── STUDENTS ──────────────────────────────────────────────────────────────────
+async function loadStudents(){
+  const sec=document.getElementById('stu-sec')?.value||'';
+  const q=document.getElementById('stu-search')?.value||'';
+  let url='/api/students/?';
+  if(sec)url+=`section_id=${sec}&`;
+  if(q)url+=`search=${encodeURIComponent(q)}&`;
+  try{const students=await api('GET',url);renderStudents(students);}
+  catch(e){toast(e.message,'error');}
+}
+
+function renderStudents(students){
+  const tb=document.getElementById('stu-table');
+  if(!students.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ei">👥</div><p>No students found</p></div></td></tr>`;return;}
+  tb.innerHTML=students.map((s,i)=>{
+    const pct=s.attendance_pct||0;
+    const c=pct>=75?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
+    const b=pct>=75?'bok':pct>=50?'bwarn':'berr';
+    return`<tr>
+      <td style="color:var(--tx3);font-family:'DM Mono',monospace">${String(i+1).padStart(2,'0')}</td>
+      <td style="color:var(--tx);font-weight:500">${s.name}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:.82rem">${s.reg_number}</td>
+      <td><span class="badge bacc">${s.section_name||'—'}</span></td>
+      <td><div style="display:flex;align-items:center;gap:.75rem"><div style="flex:1"><div class="pb"><div class="pf" style="width:${pct}%;background:linear-gradient(90deg,${c},${c}88)"></div></div></div><span style="font-family:'DM Mono',monospace;font-size:.78rem;color:${c}">${pct}%</span></div></td>
+      <td><span class="badge ${b}">${pct>=75?'Good':pct>=50?'At Risk':'Critical'}</span></td>
+      <td><button class="btn bd bxs" onclick="deleteStudent(${s.id})">Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function createStudent(){
+  try{
+    await api('POST','/api/students/',{name:document.getElementById('nst-name').value.trim(),reg_number:document.getElementById('nst-reg').value.trim(),section_id:parseInt(document.getElementById('nst-sec').value)});
+    toast('Student added!','success');closeModal('m-newstu');
+    document.getElementById('nst-name').value='';document.getElementById('nst-reg').value='';
+    loadStudents();await loadSections();
+  }catch(e){toast(e.message,'error');}
+}
+
+async function deleteStudent(id){
+  if(!confirm('Remove this student?'))return;
+  try{await api('DELETE',`/api/students/${id}`);toast('Removed','info');loadStudents();}
+  catch(e){toast(e.message,'error');}
+}
+
+function filterStudents(secId){
+  showView('students',document.querySelector('[onclick*="students"]'));
+  document.getElementById('stu-sec').value=secId;loadStudents();
+}
+
+// ── SESSIONS ──────────────────────────────────────────────────────────────────
+async function loadSessions(){
+  const sec=document.getElementById('ses-secf')?.value||'';
+  try{
+    const sessions=await api('GET','/api/sessions/'+(sec?`?section_id=${sec}`:''));
+    renderSessions(sessions);loadRecordSessionFilter();
+  }catch(e){toast(e.message,'error');}
+}
+
+function renderSessions(sessions){
+  const live=sessions.find(s=>{
+    if(s.status!=='active')return false;
+    const exp=new Date((s.expires_at.endsWith('Z')?s.expires_at:s.expires_at+'Z'));
+    return exp>new Date();
+  });
+  const banner=document.getElementById('live-banner');
+  if(live){
+    activeSes=live;banner.style.display='block';
+    banner.innerHTML=`<div class="card" style="border-color:rgba(0,230,118,.3)"><div class="cb" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div style="display:flex;align-items:center;gap:1rem">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)"></div>
+        <div><div style="font-weight:600">${live.name}</div><div style="font-size:.8rem;color:var(--tx2)">${live.section_name} · ${live.ttl} min TTL${live.prof_lat?' · 📍 GPS Active':' · GPS Disabled'}</div></div>
+      </div>
+      <button class="btn bsuc bsm" onclick="showQR()">View QR Code</button>
+    </div></div>`;
+  }else{activeSes=null;banner.style.display='none';}
+
+  const list=document.getElementById('ses-list');
+  if(!sessions.length){list.innerHTML='<div class="empty"><div class="ei">⬡</div><p>No sessions yet</p></div>';return;}
+  list.innerHTML=sessions.map(s=>{
+    const isLive=s.status==='active'&&new Date((s.expires_at.endsWith('Z')?s.expires_at:s.expires_at+'Z'))>new Date();
+    return`<div class="sescard">
+      <div style="width:10px;height:10px;border-radius:50%;background:${isLive?'var(--ok)':'var(--tx3)'};flex-shrink:0;margin-top:5px"></div>
+      <div style="flex:1">
+        <div style="font-weight:600">${s.name}</div>
+        <div style="font-size:.8rem;color:var(--tx2);display:flex;gap:1rem;flex-wrap:wrap">
+          <span>${s.section_name}</span><span>${fmt(s.created_at)}</span>
+          <span>${s.prof_lat?'📍 GPS':'📍 No GPS'}</span>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem">${s.attend_count}</div><div style="font-size:.72rem;color:var(--tx3)">present</div></div>
+      <span class="badge ${isLive?'bok':'berr'}">${isLive?'Active':'Expired'}</span>
+      ${isLive?`<button class="btn bsuc bxs" onclick="showQR()">View QR</button>`:''}
+      <button class="btn bs bxs" onclick="downloadSessionReport(${s.id},'${s.name}')">📥 Report</button>
+    </div>`;
+  }).join('');
+}
+
+async function createSession(){
+  const name=document.getElementById('nses-name').value.trim();
+  const secId=parseInt(document.getElementById('nses-sec').value);
+  const ttl=parseInt(document.getElementById('nses-ttl').value);
+  const radius=parseInt(document.getElementById('nses-radius').value);
+  if(!name||!secId){toast('Name and section required','error');return;}
+
+  const statusEl=document.getElementById('gps-capture-status');
+
+  // Capture professor GPS
+  let profLat=null,profLng=null;
+  if(radius>0){
+    statusEl.textContent='📍 Capturing your location...';
+    statusEl.style.color='var(--warn)';
+    try{
+      const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:8000,enableHighAccuracy:true}));
+      profLat=pos.coords.latitude.toFixed(6);
+      profLng=pos.coords.longitude.toFixed(6);
+      statusEl.textContent=`✓ Location captured: ${profLat}, ${profLng} (±${Math.round(pos.coords.accuracy)}m)`;
+      statusEl.style.color='var(--ok)';
+    }catch(e){
+      statusEl.textContent='⚠ GPS unavailable — proximity check disabled';
+      statusEl.style.color='var(--warn)';
+    }
+  }else{
+    statusEl.textContent='GPS check disabled for this session';
+    statusEl.style.color='var(--tx3)';
+  }
+
+  try{
+    const data=await api('POST','/api/sessions/',{name,section_id:secId,ttl,prof_lat:profLat,prof_lng:profLng,geo_radius:radius>0?radius:null});
+    activeSes=data;
+    toast('QR Session created!','success');
+    closeModal('m-newsession');
+    document.getElementById('nses-name').value='';
+    statusEl.textContent='📍 GPS location will be captured when you click Generate';
+    statusEl.style.color='';
+    await loadSessions();
+    showQR();
+  }catch(e){toast(e.message,'error');}
+}
+
+function showQR(){
+  if(!activeSes){toast('No active session','error');return;}
+  document.getElementById('qr-img').innerHTML='';
+  // Always use actual domain — works on PythonAnywhere
+  const url=`${window.location.origin}/attend?token=${activeSes.token}`;
+  try{
+    new QRCode(document.getElementById('qr-img'),{text:url,width:220,height:220,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+  }catch(e){
+    document.getElementById('qr-img').innerHTML=`<div style="width:220px;height:220px;display:flex;align-items:center;justify-content:center;color:#333;font-size:.65rem;text-align:center;padding:.5rem;font-family:monospace;word-break:break-all">${url}</div>`;
+  }
+  document.getElementById('qr-url-display').textContent=url;
+  document.getElementById('qr-info').innerHTML=`
+    <div class="qchip">Section: <span>${activeSes.section_name}</span></div>
+    <div class="qchip">TTL: <span>${activeSes.ttl} min</span></div>
+    <div class="qchip">Present: <span>${activeSes.attend_count||0}</span></div>
+  `;
+  const gb=document.getElementById('gps-badge');
+  if(activeSes.prof_lat){
+    gb.innerHTML=`<span class="gps-status-badge" style="background:rgba(0,230,118,.1);color:var(--ok);border:1px solid rgba(0,230,118,.3)">📍 GPS Active — ${activeSes.geo_radius||100}m radius enforced</span>`;
+  }else{
+    gb.innerHTML=`<span class="gps-status-badge" style="background:rgba(255,215,64,.1);color:var(--warn);border:1px solid rgba(255,215,64,.3)">⚠ GPS Disabled — any location can mark attendance</span>`;
+  }
+  openModal('m-qr');
+  startTimer();
+}
+
+function copyUrl(){
+  const url=document.getElementById('qr-url-display').textContent;
+  navigator.clipboard.writeText(url).then(()=>toast('URL copied!','success'));
+}
+
+function startTimer(){
+  if(timerIv)clearInterval(timerIv);
+  const update=()=>{
+    if(!activeSes)return;
+    const exp=new Date((activeSes.expires_at.endsWith('Z')?activeSes.expires_at:activeSes.expires_at+'Z'));
+    const rem=Math.max(0,Math.floor((exp-Date.now())/1000));
+    const el=document.getElementById('qr-timer');
+    if(el){el.textContent=secToMMSS(rem);el.className='qtimer'+(rem<60?' exp':rem<180?' warn':'');}
+    if(rem<=0){clearInterval(timerIv);expireCurrentSession();}
+  };
+  update();
+  timerIv=setInterval(update,1000);
+}
+
+async function expireCurrentSession(){
+  if(!activeSes)return;
+  const {id,name,section_id,section_name}=activeSes;
+  try{
+    await api('POST',`/api/sessions/${id}/expire`);
+    activeSes=null;if(timerIv)clearInterval(timerIv);
+    closeModal('m-qr');
+    toast('Session expired — generating report...','info');
+    await generateReport(id,name,section_id,section_name);
+    loadSessions();
+  }catch(e){toast(e.message,'error');}
+}
+
+// ── BEAUTIFUL REPORT ──────────────────────────────────────────────────────────
+async function generateReport(sessionId,sessionName,sectionId,sectionName){
+  try{
+    const [students,records,analytics]=await Promise.all([
+      api('GET',`/api/students/?section_id=${sectionId}`),
+      api('GET',`/api/attendance/?session_id=${sessionId}`),
+      api('GET','/api/attendance/analytics/summary')
+    ]);
+    const sList=Array.isArray(students)?students:[];
+    const rList=Array.isArray(records)?records:[];
+    const presentRegs=new Set(rList.map(r=>r.reg_number));
+    const profName=analytics.professor_name||PROF?.name||'Professor';
+    const profDept=analytics.professor_dept||PROF?.department||'';
+
+    const rows=sList.map(s=>{
+      const present=presentRegs.has(s.reg_number);
+      const rec=rList.find(r=>r.reg_number===s.reg_number);
+      return{name:s.name,reg:s.reg_number,section:sectionName,
+        status:present?'Present':'Absent',
+        timestamp:present&&rec?fmt(rec.timestamp):'—',
+        layers:present&&rec?(rec.layers_passed||''):'—'};
+    });
+    rows.sort((a,b)=>a.status===b.status?a.name.localeCompare(b.name):a.status==='Present'?-1:1);
+
+    const present=rows.filter(r=>r.status==='Present').length;
+    const absent=rows.filter(r=>r.status==='Absent').length;
+    const total=rows.length;
+    const rate=total?Math.round((present/total)*100):0;
+    const rateColor=rate>=75?'#00e676':rate>=50?'#ffd740':'#ff5252';
+    const dateStr=new Date().toLocaleString('en-IN');
+
+    // Download CSV
+    downloadCSV(rows,sessionName,sectionName,profName,present,absent,total,rate,dateStr);
+
+    // Show beautiful HTML report modal
+    showReportModal(rows,sessionName,sectionName,profName,profDept,present,absent,total,rate,rateColor,dateStr,rows);
+
+  }catch(e){toast('Could not generate report: '+e.message,'error');}
+}
+
+function downloadCSV(rows,sessionName,sectionName,profName,present,absent,total,rate,dateStr){
+  const header=['Student Name','Reg Number','Section','Status','Timestamp','Validation Layers'];
+  const csvRows=[
+    ['ATTENDX SESSION REPORT'],
+    [`Professor: ${profName}`],
+    [`Section: ${sectionName}`],
+    [`Session: ${sessionName}`],
+    [`Date: ${dateStr}`],
+    [`Total: ${total} | Present: ${present} | Absent: ${absent} | Attendance Rate: ${rate}%`],
+    [],
+    header,
+    ...rows.map(r=>[r.name,r.reg,r.section,r.status,r.timestamp,r.layers])
+  ];
+  const csv=csvRows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`AttendX_${sectionName}_${sessionName}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast(`✓ Report downloaded — ${present} present, ${absent} absent`,'success');
+  window._lastReportRows=rows;window._lastReportMeta={sessionName,sectionName,profName,present,absent,total,rate,dateStr};
+}
+
+function showReportModal(rows,sessionName,sectionName,profName,profDept,present,absent,total,rate,rateColor,dateStr){
+  const existing=document.getElementById('report-overlay');
+  if(existing)existing.remove();
+
+  const tableRows=rows.map((r,i)=>`
+    <tr style="background:${r.status==='Present'?'rgba(0,230,118,.03)':'rgba(255,82,82,.03)'}">
+      <td style="color:var(--tx3);font-family:'DM Mono',monospace;font-size:.78rem">${String(i+1).padStart(2,'0')}</td>
+      <td style="color:var(--tx);font-weight:500">${r.name}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:.8rem;color:var(--tx2)">${r.reg}</td>
+      <td><span class="badge ${r.status==='Present'?'bok':'berr'}" style="font-size:.72rem">${r.status==='Present'?'✓ Present':'✗ Absent'}</span></td>
+      <td style="font-size:.78rem;color:var(--tx2)">${r.timestamp}</td>
+    </tr>`).join('');
+
+  document.body.insertAdjacentHTML('beforeend',`
+    <div id="report-overlay" class="ov on" style="z-index:2000">
+      <div class="modal wide" style="max-width:820px;max-height:92vh">
+        <button class="mclose" onclick="document.getElementById('report-overlay').remove()">×</button>
+
+        <!-- Header -->
+        <div style="text-align:center;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--bor)">
+          <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">AttendX</div>
+          <div style="font-size:.75rem;color:var(--tx3);letter-spacing:.15em;text-transform:uppercase;margin-top:.2rem">Session Attendance Report</div>
+        </div>
+
+        <!-- Info Grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem;font-size:.85rem">
+          <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:.75rem 1rem">
+            <div style="font-size:.7rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem">Professor</div>
+            <div style="color:var(--tx);font-weight:600">${profName}</div>
+            ${profDept?`<div style="font-size:.78rem;color:var(--tx2)">${profDept}</div>`:''}
+          </div>
+          <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:.75rem 1rem">
+            <div style="font-size:.7rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem">Session</div>
+            <div style="color:var(--tx);font-weight:600">${sessionName}</div>
+            <div style="font-size:.78rem;color:var(--tx2)">${sectionName}</div>
+          </div>
+          <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:.75rem 1rem">
+            <div style="font-size:.7rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem">Date & Time</div>
+            <div style="color:var(--tx);font-weight:600;font-size:.82rem">${dateStr}</div>
+          </div>
+          <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:.75rem 1rem">
+            <div style="font-size:.7rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem">Attendance Rate</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:${rateColor}">${rate}%</div>
+          </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem">
+          <div style="background:var(--sur2);border:1px solid var(--bor);border-radius:12px;padding:1rem;text-align:center">
+            <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--tx)">${total}</div>
+            <div style="font-size:.75rem;color:var(--tx2)">Total Students</div>
+          </div>
+          <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:12px;padding:1rem;text-align:center">
+            <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--ok)">${present}</div>
+            <div style="font-size:.75rem;color:var(--tx2)">Present</div>
+          </div>
+          <div style="background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);border-radius:12px;padding:1rem;text-align:center">
+            <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--err)">${absent}</div>
+            <div style="font-size:.75rem;color:var(--tx2)">Absent</div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div style="margin-bottom:1.5rem">
+          <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.4rem">
+            <span style="color:var(--tx2)">Attendance Rate</span>
+            <span style="color:${rateColor};font-weight:600">${rate}%</span>
+          </div>
+          <div style="height:8px;background:rgba(255,82,82,.2);border-radius:20px;overflow:hidden">
+            <div style="height:100%;width:${rate}%;background:linear-gradient(90deg,${rateColor},${rateColor}aa);border-radius:20px;transition:width .5s"></div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap">
+          <button class="btn bsuc bsm" onclick="redownloadCSV()">⬇ Download CSV</button>
+          <button class="btn bs bsm" onclick="window.print()">🖨 Print</button>
+          <button class="btn bd bsm" onclick="document.getElementById('report-overlay').remove()">Close</button>
+        </div>
+
+        <!-- Table -->
+        <div class="twrap" style="max-height:350px;overflow-y:auto;border:1px solid var(--bor);border-radius:12px">
+          <table>
+            <thead>
+              <tr style="background:var(--sur3)">
+                <th>#</th><th>Student Name</th><th>Reg Number</th><th>Status</th><th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`);
+}
+
+function redownloadCSV(){
+  if(!window._lastReportRows||!window._lastReportMeta)return;
+  const m=window._lastReportMeta;
+  downloadCSV(window._lastReportRows,m.sessionName,m.sectionName,m.profName,m.present,m.absent,m.total,m.rate,m.dateStr);
+}
+
+// ── RECORDS ───────────────────────────────────────────────────────────────────
+async function loadRecords(){
+  const sec=document.getElementById('rec-sec')?.value||'';
+  const ses=document.getElementById('rec-ses')?.value||'';
+  let url='/api/attendance/?';
+  if(sec)url+=`section_id=${sec}&`;
+  if(ses)url+=`session_id=${ses}&`;
+  try{const records=await api('GET',url);renderRecords(records);}
+  catch(e){toast(e.message,'error');}
+}
+
+function renderRecords(records){
+  const tb=document.getElementById('rec-table');
+  if(!records.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="ei">📋</div><p>No records</p></div></td></tr>`;return;}
+  tb.innerHTML=records.map(r=>{
+    const layers=(r.layers_passed||'').split(',').filter(Boolean);
+    return`<tr>
+      <td style="color:var(--tx);font-weight:500">${r.student_name}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:.82rem">${r.reg_number}</td>
+      <td><span class="badge bacc">${r.section_name}</span></td>
+      <td style="font-size:.82rem">${r.session_name}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:.78rem;white-space:nowrap">${fmt(r.timestamp)}</td>
+      <td><div style="display:flex;gap:3px;flex-wrap:wrap">${layers.map(l=>`<span class="badge bacc" style="font-size:.65rem;padding:2px 5px">${l}</span>`).join('')}</div></td>
+      <td><span class="badge bok">✓ Present</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadRecordSessionFilter(){
+  try{
+    const sessions=await api('GET','/api/sessions/');
+    const el=document.getElementById('rec-ses');if(!el)return;
+    const v=el.value;
+    el.innerHTML='<option value="">All Sessions</option>'+sessions.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    el.value=v;
+  }catch(_){}
+}
+
+function exportCSV(){
+  const sec=document.getElementById('rec-sec')?.value||'';
+  const ses=document.getElementById('rec-ses')?.value||'';
+  let url=`${API}/api/attendance/export/csv?`;
+  if(sec)url+=`section_id=${sec}&`;
+  if(ses)url+=`session_id=${ses}&`;
+  window.open(url,'_blank');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+async function loadDashboard(){
+  try{const d=await api('GET','/api/attendance/analytics/summary');renderDashboard(d);}
+  catch(e){toast(e.message,'error');}
+}
+
+function renderDashboard(d){
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="scard"><div class="sicon">👥</div><div class="sval">${d.total_students||0}</div><div class="slb">Total Students</div></div>
+    <div class="scard"><div class="sicon">◫</div><div class="sval">${d.total_sections||0}</div><div class="slb">Sections</div></div>
+    <div class="scard"><div class="sicon">⬡</div><div class="sval">${d.total_sessions||0}</div><div class="slb">QR Sessions</div></div>
+    <div class="scard"><div class="sicon">📊</div><div class="sval" style="color:${(d.overall_pct||0)>=75?'var(--ok)':(d.overall_pct||0)>=50?'var(--warn)':'var(--err)'}">${d.overall_pct||0}%</div><div class="slb">Avg Attendance</div></div>`;
+  const ds=document.getElementById('dash-sections');
+  ds.innerHTML=(d.section_data||[]).map(s=>{
+    const c=s.attendance_pct>=75?'var(--ok)':s.attendance_pct>=50?'var(--warn)':'var(--err)';
+    return`<div style="margin-bottom:1rem"><div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.35rem"><span>${s.name}</span><span style="font-family:'DM Mono',monospace;color:${c}">${s.attendance_pct}%</span></div><div class="pb"><div class="pf" style="width:${s.attendance_pct}%;background:linear-gradient(90deg,${c},${c}88)"></div></div></div>`;
+  }).join('')||'<div class="empty"><div class="ei">◫</div><p>No data yet</p></div>';
+  renderTrendChart(d.session_trend||[]);
+  const dr=document.getElementById('dash-sessions');
+  const sessions=d.session_trend||[];
+  dr.innerHTML=sessions.slice(-5).reverse().map(s=>`<div style="display:flex;align-items:center;gap:1rem;padding:.85rem 1.5rem;border-bottom:1px solid var(--bor)"><div style="flex:1"><div style="font-size:.875rem;font-weight:500">${s.session_name}</div><div style="font-size:.75rem;color:var(--tx2)">${s.pct}% attendance</div></div><span class="badge ${s.pct>=75?'bok':s.pct>=50?'bwarn':'berr'}">${s.attend_count}/${s.total_students}</span></div>`).join('')||'<div class="empty"><div class="ei">⬡</div><p>No sessions yet</p></div>';
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+async function loadAnalytics(){
+  try{
+    const [d,students]=await Promise.all([api('GET','/api/attendance/analytics/summary'),api('GET','/api/students/')]);
+    document.getElementById('an-stats').innerHTML=`
+      <div class="scard"><div class="sicon">📊</div><div class="sval">${d.overall_pct||0}%</div><div class="slb">Overall Rate</div></div>
+      <div class="scard"><div class="sicon">✅</div><div class="sval" style="color:var(--ok)">${d.students_above_75||0}</div><div class="slb">Students ≥ 75%</div></div>
+      <div class="scard"><div class="sicon">⚠</div><div class="sval" style="color:var(--err)">${d.students_below_75||0}</div><div class="slb">Students < 75%</div></div>
+      <div class="scard"><div class="sicon">📋</div><div class="sval">${d.total_records||0}</div><div class="slb">Total Records</div></div>`;
+    const tb=document.getElementById('an-table');
+    tb.innerHTML=(Array.isArray(students)?students:[]).map(s=>{
+      const pct=s.attendance_pct||0;const c=pct>=75?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
+      const b=pct>=75?'bok':pct>=50?'bwarn':'berr';
+      return`<tr><td style="color:var(--tx);font-weight:500">${s.name}</td><td><span class="badge bacc">${s.section_name}</span></td><td style="font-family:'DM Mono',monospace">${s.attendance_count||0}</td><td style="font-family:'DM Mono',monospace">${s.total_sessions||0}</td><td><div style="display:flex;align-items:center;gap:.75rem"><div style="flex:1"><div class="pb"><div class="pf" style="width:${pct}%;background:linear-gradient(90deg,${c},${c}88)"></div></div></div><span style="font-family:'DM Mono',monospace;font-size:.78rem;color:${c}">${pct}%</span></div></td><td><span class="badge ${b}">${pct>=75?'✓ On Track':pct>=50?'⚠ At Risk':'✗ Critical'}</span></td></tr>`;
+    }).join('')||`<tr><td colspan="6"><div class="empty"><div class="ei">👥</div><p>No data</p></div></td></tr>`;
+    renderSectionChart(d.section_data||[]);
+    renderTrendChart2(d.session_trend||[]);
+  }catch(e){toast(e.message,'error');}
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────────────────
+const CD={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8899bb',font:{family:'Outfit'}}}},scales:{x:{grid:{color:'rgba(99,160,255,.06)'},ticks:{color:'#8899bb'}},y:{grid:{color:'rgba(99,160,255,.06)'},ticks:{color:'#8899bb'}}}};
+
+function renderTrendChart(trend){
+  const ctx=document.getElementById('c-trend');if(!ctx)return;
+  if(charts.trend)charts.trend.destroy();
+  charts.trend=new Chart(ctx,{type:'line',data:{labels:trend.map(t=>t.session_name.substring(0,14)),datasets:[{label:'Attendance %',data:trend.map(t=>t.pct),borderColor:'#3d8bff',backgroundColor:'rgba(61,139,255,.08)',fill:true,tension:0.4,pointBackgroundColor:'#3d8bff',pointRadius:5}]},options:{...CD,scales:{x:{...CD.scales.x},y:{...CD.scales.y,min:0,max:100,ticks:{...CD.scales.y.ticks,callback:v=>v+'%'}}}}});
+}
+
+function renderSectionChart(sections){
+  const ctx=document.getElementById('c-sec');if(!ctx)return;
+  if(charts.sec)charts.sec.destroy();
+  charts.sec=new Chart(ctx,{type:'bar',data:{labels:sections.map(s=>s.name),datasets:[{label:'Attendance %',data:sections.map(s=>s.attendance_pct),backgroundColor:['rgba(61,139,255,.6)','rgba(124,77,255,.6)','rgba(0,229,255,.6)','rgba(0,230,118,.6)'],borderRadius:8,borderWidth:0}]},options:{...CD,scales:{x:{...CD.scales.x},y:{...CD.scales.y,min:0,max:100,ticks:{...CD.scales.y.ticks,callback:v=>v+'%'}}}}});
+}
+
+function renderTrendChart2(trend){
+  const ctx=document.getElementById('c-trend2');if(!ctx)return;
+  if(charts.trend2)charts.trend2.destroy();
+  charts.trend2=new Chart(ctx,{type:'line',data:{labels:trend.map(t=>t.session_name.substring(0,12)),datasets:[{label:'Attendance %',data:trend.map(t=>t.pct),borderColor:'#7c4dff',backgroundColor:'rgba(124,77,255,.08)',fill:true,tension:0.4,pointBackgroundColor:'#7c4dff',pointRadius:4}]},options:{...CD}});
+}
+
+// ── Delete Section ────────────────────────────────────────────────────────────
+async function deleteSection(id, name) {
+  if (!confirm(`Delete "${name}" and ALL its students and sessions? This cannot be undone.`)) return;
+  try {
+    await api('DELETE', `/api/sections/${id}`);
+    toast(`Section "${name}" deleted`, 'info');
+    await loadSections();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── Download Report for any session ──────────────────────────────────────────
+async function downloadSessionReport(sessionId, sessionName) {
+  try {
+    toast('Generating report...', 'info');
+    const d = await api('GET', `/api/attendance/report/${sessionId}`);
+    // Show the same styled modal
+    showReportModal(
+      d.rows, d.session_name, d.section_name,
+      d.professor_name, d.professor_dept,
+      d.present, d.absent, d.total, d.rate
+    );
+  } catch(e) { toast('Could not load report: ' + e.message, 'error'); }
+}
+
+// ── Bulk Upload Excel ─────────────────────────────────────────────────────────
+async function uploadExcel() {
+  const fileInput = document.getElementById('excel-file');
+  if (!fileInput.files.length) { toast('Please select a file', 'error'); return; }
+
+  const file = fileInput.files[0];
+  const ext  = file.name.split('.').pop().toLowerCase();
+
+  // Only accept CSV or Excel-saved-as-CSV
+  if (!['csv','txt'].includes(ext)) {
+    // If it's .xlsx, show instruction
+    if (ext === 'xlsx' || ext === 'xls') {
+      toast('Please save your Excel file as CSV first: File → Save As → CSV', 'error');
+      document.getElementById('upload-note').style.display = 'block';
+      return;
+    }
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  document.getElementById('upload-btn').disabled = true;
+  document.getElementById('upload-btn').textContent = 'Uploading...';
+  document.getElementById('upload-result').innerHTML = '<div style="text-align:center;padding:1rem"><div class="spinner"></div></div>';
+
+  try {
+    const res = await fetch('/api/students/bulk-upload', {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${TOKEN}` },
+      body:    formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+    const html = `
+      <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:1rem;margin-bottom:.75rem">
+        <div style="font-weight:600;color:var(--ok);margin-bottom:.5rem">✓ Upload Complete</div>
+        <div style="font-size:.82rem;color:var(--tx2)">
+          <strong style="color:var(--ok)">${data.added_count}</strong> students added &nbsp;·&nbsp;
+          <strong style="color:var(--warn)">${data.skipped_count}</strong> skipped (duplicates) &nbsp;·&nbsp;
+          <strong style="color:var(--err)">${data.error_count}</strong> errors
+        </div>
+      </div>
+      ${data.added.length ? `<div style="font-size:.78rem;color:var(--tx2);max-height:150px;overflow-y:auto;background:var(--sur2);border-radius:8px;padding:.75rem">${data.added.map(a=>`<div>✓ ${a}</div>`).join('')}</div>` : ''}
+      ${data.skipped.length ? `<div style="font-size:.78rem;color:var(--warn);margin-top:.5rem">${data.skipped.map(a=>`<div>⚠ ${a}</div>`).join('')}</div>` : ''}
+      ${data.errors.length  ? `<div style="font-size:.78rem;color:var(--err);margin-top:.5rem">${data.errors.map(a=>`<div>✗ ${a}</div>`).join('')}</div>` : ''}
+    `;
+    document.getElementById('upload-result').innerHTML = html;
+    await loadSections();
+    loadStudents();
+    toast(`${data.added_count} students added!`, 'success');
+  } catch(e) {
+    document.getElementById('upload-result').innerHTML = `<div style="color:var(--err);font-size:.85rem">✗ ${e.message}</div>`;
+    toast(e.message, 'error');
+  } finally {
+    document.getElementById('upload-btn').disabled = false;
+    document.getElementById('upload-btn').textContent = 'Upload & Import';
+  }
+}
+</script>
+
+<!-- Bulk Upload Modal -->
+<div class="ov" id="m-bulkupload">
+  <div class="modal"><button class="mclose" onclick="closeModal('m-bulkupload')">×</button>
+    <div class="mtitle">📥 Upload Students from Excel</div>
+
+    <div style="background:rgba(61,139,255,.08);border:1px solid rgba(61,139,255,.2);border-radius:10px;padding:1rem;margin-bottom:1.2rem;font-size:.82rem;color:var(--tx2);line-height:1.7">
+      <strong style="color:var(--tx)">Required CSV columns:</strong><br>
+      <span style="font-family:'DM Mono',monospace">Name &nbsp;|&nbsp; Registration Number &nbsp;|&nbsp; Section</span><br><br>
+      <strong style="color:var(--tx)">How to export from Excel:</strong><br>
+      Open your Excel file → File → Save As → Choose <strong>CSV (Comma delimited)</strong> → Save
+    </div>
+
+    <div id="upload-note" style="display:none;background:rgba(255,215,64,.08);border:1px solid rgba(255,215,64,.2);border-radius:10px;padding:.75rem;margin-bottom:1rem;font-size:.8rem;color:var(--warn)">
+      ⚠ .xlsx files cannot be uploaded directly. Please save as CSV first.
+    </div>
+
+    <div style="margin-bottom:.5rem">
+      <a href="#" onclick="downloadSampleCSV();return false;" style="font-size:.8rem;color:var(--acc);text-decoration:none">⬇ Download sample CSV template</a>
+    </div>
+
+    <div class="fl">
+      <label class="flabel">Select CSV File</label>
+      <input type="file" id="excel-file" accept=".csv,.txt,.xlsx,.xls"
+        style="width:100%;background:var(--sur2);border:1px solid var(--bor);border-radius:10px;padding:.75rem;color:var(--tx);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer">
+    </div>
+
+    <div id="upload-result" style="margin-bottom:1rem"></div>
+
+    <button class="btn bp" id="upload-btn" onclick="uploadExcel()">Upload & Import</button>
+  </div>
+</div>
+
+</body>
+</html>
