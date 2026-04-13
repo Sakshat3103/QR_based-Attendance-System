@@ -33,6 +33,9 @@ Make sure you have:
 
 https://atttendx.pythonanywhere.com/%0A
 
+##Presentation link:
+https://docs.google.com/presentation/d/1E5GkmxTrKe7bO5pbItlpPuvb1-TevDPh/edit?usp=sharing&ouid=105736902380137067987&rtpof=true&sd=true
+
 ## ⚙️ How to Run the Project (Step-by-Step)
 
 ### Step 1: Download the Project
